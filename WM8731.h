@@ -21,8 +21,6 @@
 #define BAUDRATE 100000U
 #define I2C0_SCL_PIN 2
 #define I2C0_SDA_PIN 3
-#define I2C0_SCL_2_PIN 24
-#define I2C0_SDA_2_PIN 25
 
 /** Max Delay of I2C in ms */
 #define I2C_DELAY 400

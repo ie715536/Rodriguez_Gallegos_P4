@@ -25,7 +25,7 @@ static void fsl_i2c_callback(I2C_Type *base, i2c_master_handle_t *handle, status
 freertos_i2c_flag_t freertos_i2c_init(freertos_i2c_config_t config)
 {
 	freertos_i2c_flag_t retval = freertos_i2c_fail;
-	i2c_master_config_t  fsl_i2c_config;
+	i2c_master_config_t  fsl_i2c_config; /* master */
 
 	if(config.i2c_number < NUMBER_OF_SERIAL_PORTS)
 	{
@@ -38,9 +38,51 @@ freertos_i2c_flag_t freertos_i2c_init(freertos_i2c_config_t config)
 			freertos_i2c_enable_port_clock(config.port);
 			freertos_enable_i2c_clock(config.i2c_number);
 
-			/* Port sets */
+			/* Port sets
 			PORT_SetPinMux(freertos_i2c_get_port_base(config.port), config.SCL, config.pin_mux);
 			PORT_SetPinMux(freertos_i2c_get_port_base(config.port), config.SDA, config.pin_mux);
+			*/
+			const port_pin_config_t portb2_pinG12_config =
+			{/* Internal pull-up resistor is enabled */
+				kPORT_PullUp,
+				/* Fast slew rate is configured */
+				kPORT_SlowSlewRate,
+				/* Passive filter is disabled */
+				kPORT_PassiveFilterDisable,
+				/* Open drain is enabled */
+				kPORT_OpenDrainEnable,
+				/* Low drive strength is configured */
+				kPORT_LowDriveStrength,
+				/* Pin is configured as I2C0_SCL */
+				kPORT_MuxAlt5,
+				/* Pin Control Register fields [15:0] are not locked */
+				kPORT_UnlockRegister
+			};
+
+			/* PORTB2 (pin G12) is configured as I2C0_SCL */
+			PORT_SetPinConfig(PORTE, 24U, &portb2_pinG12_config);
+
+			const port_pin_config_t portb3_pinG11_config =
+			{/* Internal pull-up resistor is enabled */
+				kPORT_PullUp,
+				/* Fast slew rate is configured */
+				kPORT_SlowSlewRate,
+				/* Passive filter is disabled */
+				kPORT_PassiveFilterDisable,
+				/* Open drain is enabled */
+				kPORT_OpenDrainEnable,
+				/* Low drive strength is configured */
+				kPORT_LowDriveStrength,
+				/* Pin is configured as I2C0_SDA */
+				kPORT_MuxAlt5,
+				/* Pin Control Register fields [15:0] are not locked */
+				kPORT_UnlockRegister
+			};
+
+			/* PORTB3 (pin G11) is configured as I2C0_SDA */
+			PORT_SetPinConfig(PORTE, 25U, &portb3_pinG11_config);
+
+
 
 			I2C_MasterGetDefaultConfig(&fsl_i2c_config);
 			fsl_i2c_config.baudRate_Bps = config.baudrate;
@@ -72,7 +114,7 @@ freertos_i2c_flag_t freertos_i2c_init(freertos_i2c_config_t config)
 	return retval;
 }
 
-freertos_i2c_flag_t freertos_i2c_transfer(freertos_i2c_number_t i2c_number, uint8_t * buffer, uint16_t length, uint8_t slaveAddress, uint32_t subaddress, uint8_t subaddressSize)
+freertos_i2c_flag_t freertos_i2c_transfer(freertos_i2c_number_t i2c_number, uint8_t * buffer, uint16_t length, uint8_t slaveAddress)
 {
 	freertos_i2c_flag_t flag = freertos_i2c_fail;
 	i2c_master_transfer_t transfer;
@@ -82,8 +124,7 @@ freertos_i2c_flag_t freertos_i2c_transfer(freertos_i2c_number_t i2c_number, uint
 		transfer.flags = kI2C_TransferDefaultFlag; /** default flag for transference */
 		transfer.slaveAddress = slaveAddress;
 		transfer.direction = kI2C_Write; /** We want to transfer */
-		transfer.subaddress = subaddress;
-		transfer.subaddressSize = subaddressSize;
+		transfer.subaddressSize = 0;
 		transfer.data = buffer;
 		transfer.dataSize = length;
 

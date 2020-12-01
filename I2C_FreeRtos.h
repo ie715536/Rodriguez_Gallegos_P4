@@ -52,7 +52,7 @@ typedef struct
 }freertos_i2c_config_t ;
 
 freertos_i2c_flag_t freertos_i2c_init(freertos_i2c_config_t config);
-freertos_i2c_flag_t freertos_i2c_transfer(freertos_i2c_number_t i2c_number, uint8_t * buffer, uint16_t length, uint8_t slaveAddress, uint32_t subaddress, uint8_t subaddressSize);
+freertos_i2c_flag_t freertos_i2c_transfer(freertos_i2c_number_t i2c_number, uint8_t * buffer, uint16_t length, uint8_t slaveAddress);
 freertos_i2c_flag_t freertos_i2c_receive(freertos_i2c_number_t i2c_number, uint8_t * buffer, uint16_t lenght, uint8_t slaveAddress, uint32_t subaddress, uint8_t subaddressSize);
 
 #endif /* I2C_FREERTOS_H_ */

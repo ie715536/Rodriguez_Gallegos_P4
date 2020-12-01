@@ -88,19 +88,19 @@ void Data_Buffer(uint32_t *Buffer)
 	FILTER_HP();
 	FILTER_BP();
 }
-void Call_Filter(uint8_t Type)
+void Call_Filter(filters Type)
 {
 
 	switch(Type){
-	case 0:
+	case LP:
 		/*LOW PASS*/
 		arm_fir_f32(&FIR[LP], input_32 + (4 * Block_Size), output_32 + (4 * Block_Size), Block_Size);
 		break;
-	case 1:
-		/* HIGH PASS*/
+	case HP:
+		/*HIGH PASS*/
 		arm_fir_f32(&FIR[HP], input_32 + (4 * Block_Size), output_32 + (4 * Block_Size), Block_Size);
 		break;
-	case 2:
+	case BP:
 		/*BAND PASS*/
 		arm_fir_f32(&FIR[BP], input_32 + (4 * Block_Size), output_32 + (4 * Block_Size), Block_Size);
 		break;

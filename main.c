@@ -16,6 +16,7 @@
 #include "task.h"
 #include "I2C_FreeRtos.h"
 #include "WM8731.h"
+#include "semphr.h"
 
 
 /* TODO: insert other definitions and declarations here. */

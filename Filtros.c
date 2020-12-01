@@ -72,7 +72,7 @@ float32_t *input_32, *output_32;
 void FILTER_LP(){
 	arm_fir_init_f32(&FIR[LP], VAL_NUMBERS, (float32_t*)&LP_300[0], &fir_val[0][0], Block_Size);
 }
-void FILLTER_HP(){
+void FILTER_HP(){
 	arm_fir_init_f32(&FIR[HP], VAL_NUMBERS, (float32_t*)&HP_5000[0], &fir_val[1][0], Block_Size);
 }
 void FILTER_BP(){

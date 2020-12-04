@@ -202,7 +202,7 @@ void wm8731_i2s_config(void)
 //	SAI_RxEnableInterrupts(I2S0, kSAI_FIFOErrorInterruptEnable);
 //	EnableIRQ(I2S0_Rx_IRQn);
 
-	/*Initialize I2S pins*/
+	/*Init I2S*/
 	/* Port C Clock Gate Control: Clock enabled */
 	CLOCK_EnableClock(kCLOCK_PortC);
 	/* Port E Clock Gate Control: Clock enabled */

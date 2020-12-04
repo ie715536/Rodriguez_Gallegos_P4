@@ -11,6 +11,7 @@
 #include "task.h"
 #include "semphr.h"
 #include "fsl_uart.h"
+#include "I2S_FreeRtos.h"
 #include "filtros.h"
 
 /* TODO: insert other definitions and declarations here. */
@@ -18,90 +19,108 @@
  * @brief   Application entry point.
  */
 
-#define DEMO_UART_CLK_FREQ CLOCK_GetFreq(SYS_CLK)
-#define DEMO_UART          UART0
 
-SemaphoreHandle_t i2c_sem;
-SemaphoreHandle_t uart_sem;
+#define D_UART_CLK CLOCK_GetFreq(SYS_CLK)
+#define D_UART UART0
 
-uint32_t Buffer[4 * 1024];
+const char* ENABLE_LP = "LPE";
+const char* ENABLE_HP = "HPE";
+const char* ENABLE_BP = "BPE";
+const char* DISABLE_LP = "LPD";
+const char* DISABLE_HP = "HPD";
+const char* DISABLE_BP = "BPD";
+
+SemaphoreHandle_t initialization_sem;
+uint32_t Buffer[4*1024];
 uint32_t rxBuffer = 0;
-void init_uart(void);
+static char uart_data[3];
 
 void init_codec(void *parameters)
 {
-	uint8_t g_codec_sucess = freertos_i2c_fail;
-	g_codec_sucess = wm8731_init();
+	uint8_t g_codec_sucess  = freertos_i2c_fail;
+	g_codec_sucess  = wm8731_init(); //configurar I2C
 	if(freertos_i2c_sucess == g_codec_sucess)
 	{
-		PRINTF("Codec configured\n\r");
+		PRINTF("Inicializacion I2C finalizada\n\r");
 	}
-	wm8731_i2s_config();
-	//wm8731_Activate();
-	Data_Buffer(&Buffer[0]);
-	init_uart();
-	xSemaphoreGive(i2c_sem);
-	vTaskSuspend(NULL);
+
+	//CONFIGURAR I2S
+
+	while(1)
+	{
+		xSemaphoreGive(initialization_sem);
+
+		vTaskDelay(portMAX_DELAY);
+	}
+
+}
+
+void init_uart(void *parameters)
+{
+	Data_Buffer(Buffer);
+	static uart_config_t configuration;
+	UART_GetDefaultConfig(&configuration);
+	configuration.baudRate_Bps = 9600;
+	configuration.enableTx     = true;
+	configuration.enableRx     = true;
+
+	UART_Init(D_UART, &configuration, D_UART_CLK);
+
+	uint8_t buffer[]   = "Practica 4 Alejandro Gudiño \tEthan Castillo\r\nSeleccionar filtro\r\n\r\nPasa bajas (LP)\n\rPasa altas (HP)\n\rPasa bandas (BP)\r\n";
+	UART_WriteBlocking(D_UART, buffer, sizeof(buffer) - 1);
+
+	/* Tomar datos de la uart*/
+	while(1)
+	{
+		uint8_t i = 0;
+		uint8_t ch;
+		do{
+			UART_ReadBlocking(D_UART, &ch, 1);
+			UART_WriteBlocking(D_UART,&ch, 1);
+			uart_data[i] = ch;
+			i++;
+		} while(i < 3);
+
+
+		if(strcmp(ENABLE_LP,uart_data) == 0)
+		{
+			Call_Filter(LP);
+		}
+		else if(strcmp(ENABLE_HP,uart_data) == 0)
+		{
+			Call_Filter(HP);
+		}
+		else if(strcmp(ENABLE_BP,uart_data) == 0)
+		{
+			Call_Filter(BP);
+		}
+		else if(strcmp(DISABLE_LP,uart_data) == 0 || strcmp(DISABLE_HP,uart_data) == 0 || strcmp(DISABLE_BP,uart_data) == 0)
+		{
+			Call_Filter(BYPASS);
+		}
+		UART_WriteBlocking(D_UART,"\r   \r", 5);
+	}
+
 }
 
 void codec_audio(void *parameters)
 {
+	xSemaphoreTake(initialization_sem, portMAX_DELAY);
 
-	xSemaphoreTake(i2c_sem, portMAX_DELAY);
-
-	for(;;)
+	while(1)
 	{
-		/*TODO AUDIO FUNCTIONS*/
-		wm8731_getData((uint8_t*) (Buffer+rxBuffer), 1024);
+		/*
+		codec_rx((uint8_t*)(Buffer+rxBuffer),1024);
 		rxBuffer++;
-			if(rxBuffer>= 4)
-			{
-				rxBuffer = 0U;
-				xSemaphoreGive(uart_sem);
 
-			}
-		vTaskDelay(pdMS_TO_TICKS(300));
+		if(rxBuffer >= 4)
+		{
+			rxBuffer = 0U;
+		}
+		*/
 	}
 }
 
-uint8_t *filter_data = 0;
-void uart_inst(void *parameters)
-{
-
-	xSemaphoreTake(uart_sem, portMAX_DELAY);
-
-	for(;;)
-	{
-		/* Tomar datos de la uart*/
-		UART_ReadBlocking(DEMO_UART, filter_data, 3);
-		vTaskDelay(pdMS_TO_TICKS(300));
-	}
-}
-
-void init_uart(void)
-{
-	static uart_config_t config;
-	UART_GetDefaultConfig(&config);
-	config.baudRate_Bps = 115200;
-	config.enableTx     = true;
-	config.enableRx     = true;
-
-	UART_Init(DEMO_UART, &config, DEMO_UART_CLK_FREQ);
-
-	uint8_t txbuff[]   = "Codec audio practice 4\r\nChoose your filter\r\n\r\nLow pass (LP)\n\rHigh pass (HP)\n\rBand Pass (BP)\r\n";
-	UART_WriteBlocking(DEMO_UART, txbuff, sizeof(txbuff) - 1);
-
-	/* Tomar datos de la uart*/
-	uint8_t i = 0;
-	uint8_t ch;
-	do{
-		UART_ReadBlocking(DEMO_UART, &ch, 1);
-		UART_WriteBlocking(DEMO_UART,&ch, 1);
-		*(filter_data+i) = ch;
-		i++;
-	} while(i < 3);
-
-}
 
 int main(void)
 {
@@ -109,24 +128,22 @@ int main(void)
     BOARD_InitBootPins();
     BOARD_InitBootClocks();
     BOARD_InitBootPeripherals();
-#ifndef BOARD_INIT_DEBUG_CONSOLE_PERIPHERAL
     /* Init FSL debug console. */
     BOARD_InitDebugConsole();
-#endif
 
+    initialization_sem = xSemaphoreCreateBinary();
 
-    i2c_sem = xSemaphoreCreateBinary();
-    uart_sem = xSemaphoreCreateBinary();
+    xTaskCreate(init_uart, "initialize UART", 110, NULL, 1, NULL);
+    xTaskCreate(init_codec, "init project", 110, NULL, 1, NULL);
+    xTaskCreate(codec_audio, "get audio", 110, NULL, 1, NULL);
 
-    xTaskCreate(init_codec, "init_codec", 110, NULL, 1, NULL);
-    xTaskCreate(codec_audio, "codec_audio", 110, NULL, 1, NULL);
-   // xTaskCreate(uart_inst, "uart", 110, NULL, 1, NULL);
 
     vTaskStartScheduler();
 
-    while(1)
+    for(;;)
     {
 
     }
     return 0 ;
 }
+

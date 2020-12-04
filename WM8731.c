@@ -260,7 +260,6 @@ static void txCallback(I2S_Type *base, sai_edma_handle_t *handle, status_t statu
 
 	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
-static void rxCallback(I2S_Type *base, sai_edma_handle_t *handle, status_t status, void *userData)
-{
 
-}
+
+

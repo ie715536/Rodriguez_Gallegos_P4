@@ -23,27 +23,25 @@
 #define D_UART_CLK CLOCK_GetFreq(SYS_CLK)
 #define D_UART UART0
 
+const char* ENABLE_LP = "LPE";
+const char* ENABLE_HP = "HPE";
+const char* ENABLE_BP = "BPE";
+const char* DISABLE_LP = "LPD";
+const char* DISABLE_HP = "HPD";
+const char* DISABLE_BP = "BPD";
 
 SemaphoreHandle_t initialization_sem;
 uint32_t Buffer[4*1024];
 uint32_t rxBuffer = 0;
-
-const char* LPE = "LPE";
-const char* HPE = "HPE";
-const char* BPE = "BPE";
-const char* LPD = "LPD";
-const char* HPD = "HPD";
-const char* BPD = "BPD";
-
 static char uart_data[3];
 
 void init_codec(void *parameters)
 {
 	uint8_t g_codec_sucess  = freertos_i2c_fail;
-	g_codec_sucess  = wm8731_init();
-	if(freertos_i2c_sucess != g_codec_sucess)
+	g_codec_sucess  = wm8731_init(); //configurar I2C
+	if(freertos_i2c_sucess == g_codec_sucess)
 	{
-		PRINTF("I2C INICIALIZADO INCORRECTAMETNE\n\r");
+		PRINTF("Inicializacion I2C finalizada\n\r");
 	}
 
 	//CONFIGURAR I2S
@@ -62,15 +60,16 @@ void init_uart(void *parameters)
 	Data_Buffer(Buffer);
 	static uart_config_t configuration;
 	UART_GetDefaultConfig(&configuration);
-	configuration.baudRate_Bps = 115200;
+	configuration.baudRate_Bps = 9600;
 	configuration.enableTx     = true;
 	configuration.enableRx     = true;
 
 	UART_Init(D_UART, &configuration, D_UART_CLK);
 
-	uint8_t buffer[]   = "CODEC AUDIO FILTER MENU \r\nFILTRO:\r\n\r\nLOW PASS ENABLE (LPE)\n\r HIGH PASS ENABLE(HPE)\n\r BAND PASS ENABLE(BPE)\r\n";
+	uint8_t buffer[]   = "Practica 4 Alejandro Gudiño \tEthan Castillo\r\nSeleccionar filtro\r\n\r\nPasa bajas (LP)\n\rPasa altas (HP)\n\rPasa bandas (BP)\r\n";
 	UART_WriteBlocking(D_UART, buffer, sizeof(buffer) - 1);
 
+	/* Tomar datos de la uart*/
 	while(1)
 	{
 		uint8_t i = 0;
@@ -83,19 +82,19 @@ void init_uart(void *parameters)
 		} while(i < 3);
 
 
-		if(strcmp(LPE,uart_data) == 0)
+		if(strcmp(ENABLE_LP,uart_data) == 0)
 		{
 			Call_Filter(LP);
 		}
-		else if(strcmp(HPE,uart_data) == 0)
+		else if(strcmp(ENABLE_HP,uart_data) == 0)
 		{
 			Call_Filter(HP);
 		}
-		else if(strcmp(BPE,uart_data) == 0)
+		else if(strcmp(ENABLE_BP,uart_data) == 0)
 		{
 			Call_Filter(BP);
 		}
-		else if(strcmp(LPD,uart_data) == 0 || strcmp(HPD,uart_data) == 0 || strcmp(BPD,uart_data) == 0)
+		else if(strcmp(DISABLE_LP,uart_data) == 0 || strcmp(DISABLE_HP,uart_data) == 0 || strcmp(DISABLE_BP,uart_data) == 0)
 		{
 			Call_Filter(BYPASS);
 		}

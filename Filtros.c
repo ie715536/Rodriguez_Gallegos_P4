@@ -94,15 +94,30 @@ void Call_Filter(filters Type)
 	switch(Type){
 	case LP:
 		/*LOW PASS*/
-		arm_fir_f32(&FIR[LP], input_32 + (4 * Block_Size), output_32 + (4 * Block_Size), Block_Size);
+		for(uint8_t i = 0; i < NUM_BLOCKS; i++)
+		{
+			arm_fir_f32(&FIR[LP], input_32 + (4 * Block_Size), output_32 + (4 * Block_Size), Block_Size);
+		}
 		break;
 	case HP:
 		/*HIGH PASS*/
-		arm_fir_f32(&FIR[HP], input_32 + (4 * Block_Size), output_32 + (4 * Block_Size), Block_Size);
+		for(uint8_t i = 0; i < NUM_BLOCKS; i++)
+		{
+			arm_fir_f32(&FIR[HP], input_32 + (4 * Block_Size), output_32 + (4 * Block_Size), Block_Size);
+		}
 		break;
 	case BP:
 		/*BAND PASS*/
-		arm_fir_f32(&FIR[BP], input_32 + (4 * Block_Size), output_32 + (4 * Block_Size), Block_Size);
+		for(uint8_t i = 0; i < NUM_BLOCKS; i++)
+		{
+			arm_fir_f32(&FIR[BP], input_32 + (4 * Block_Size), output_32 + (4 * Block_Size), Block_Size);
+		}
+		break;
+	case BYPASS:
+		for(uint8_t i = 0; i < NUM_BLOCKS; i++)
+		{
+			output_32[i] = input_32[i];
+		}
 		break;
 	default:
 		break;

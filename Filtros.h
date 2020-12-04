@@ -13,6 +13,7 @@
 #define VAL_NUMBERS 50
 #define BLOCK 1024
 #define LENGTH_SAMPLES 4096
+#define NUM_BLOCKS LENGTH_SAMPLES/BLOCK
 
 void FILTER_LP();
 void FILTER_HP();
@@ -25,7 +26,8 @@ typedef enum
 {
 	LP,
 	HP,
-	BP
+	BP,
+	BYPASS
 } filters;
 
 #endif /* FILTROS_H_ */
